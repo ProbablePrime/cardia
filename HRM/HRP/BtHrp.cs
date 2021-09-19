@@ -20,6 +20,7 @@ namespace MGT.HRM.HRP
         private GattCharacteristic characteristic;
         private PnpObjectWatcher watcher;
         private const GattClientCharacteristicConfigurationDescriptorValue CHARACTERISTIC_NOTIFICATION_TYPE = GattClientCharacteristicConfigurationDescriptorValue.Notify;
+
         // Heart Rate devices typically have only one Heart Rate Measurement characteristic.
         // Make sure to check your device's documentation to find out how many characteristics your specific device has.
         private int characteristicIndex = 0;

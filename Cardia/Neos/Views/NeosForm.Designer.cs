@@ -63,6 +63,7 @@ namespace MGT.Cardia.Neos.Views
             this.Start.TabIndex = 2;
             this.Start.Text = "Start";
             this.Start.UseVisualStyleBackColor = true;
+            this.Start.Click += new System.EventHandler(this.Start_Click);
             // 
             // NeosForm
             // 
