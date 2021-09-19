@@ -179,9 +179,7 @@ namespace MGT.HRM.HRP
             if (Running)
                 return;
 
-#if DEBUG
             logger.Debug("Starting HRP");
-#endif
 
             lastReceivedDate = DateTime.Now;
 
@@ -195,14 +193,12 @@ namespace MGT.HRM.HRP
         {          
             try
             {
-#if DEBUG
                 logger.Debug($"Getting GattDeviceService {device.Name} with id {device.Id}");
-#endif
+
                 service = await GattDeviceService.FromIdAsync(device.Id);
                 if (initDelay > 0)
                     await Task.Delay(initDelay);
 
-#if DEBUG
                 if (service != null)
                 {
                     logger.Debug($"GattDeviceService instatiated successfully");
@@ -215,10 +211,9 @@ namespace MGT.HRM.HRP
                 {
                     logger.Debug($"Failed to instantiate GattDeviceService");
                 }
-#endif
 
                 // List all the characteristics of the device
-#if DEBUG
+
                 logger.Debug("Getting all GattCharacteristic...");
                 GattCharacteristicsResult allResult = await service.GetCharacteristicsAsync();
                 logger.Debug($"GattCharacteristicsResult status {allResult.Status}");
@@ -228,15 +223,12 @@ namespace MGT.HRM.HRP
                         $"description = {allCharacteristic.UserDescription}, " +
                         $"protection level = {allCharacteristic.ProtectionLevel}");
                 }
-#endif
 
                 // Obtain the characteristic for which notifications are to be received
-#if DEBUG
                 logger.Debug($"Getting HeartRateMeasurement GattCharacteristic {characteristicIndex}");
-#endif
+
                 GattCharacteristicsResult result = await service.GetCharacteristicsForUuidAsync(GattCharacteristicUuids.HeartRateMeasurement);
 
-#if DEBUG
                 logger.Debug($"GattCharacteristicsResult status {result.Status}");
                 foreach (GattCharacteristic hrCharacteristic in result.Characteristics)
                 {
@@ -244,33 +236,31 @@ namespace MGT.HRM.HRP
                         $"description = {hrCharacteristic.UserDescription}, " +
                         $"protection level = {hrCharacteristic.ProtectionLevel}");
                 }
-#endif
 
                 characteristic = result.Characteristics[characteristicIndex];
 
                 // While encryption is not required by all devices, if encryption is supported by the device,
                 // it can be enabled by setting the ProtectionLevel property of the Characteristic object.
                 // All subsequent operations on the characteristic will work over an encrypted link.
-#if DEBUG
                 logger.Debug("Setting EncryptionRequired protection level on GattCharacteristic");
-#endif
+
                 characteristic.ProtectionLevel = GattProtectionLevel.EncryptionRequired;
 
                 // Register the event handler for receiving notifications
                 if (initDelay > 0)
                     await Task.Delay(initDelay);
-#if DEBUG
+
                 logger.Debug("Registering event handler onction level on GattCharacteristic");
-#endif
+
                 characteristic.ValueChanged += Characteristic_ValueChanged;
 
                 // In order to avoid unnecessary communication with the device, determine if the device is already 
                 // correctly configured to send notifications.
                 // By default ReadClientCharacteristicConfigurationDescriptorAsync will attempt to get the current
                 // value from the system cache and communication with the device is not typically required.
-#if DEBUG
+
                 logger.Debug("Reading GattCharacteristic configuration descriptor");
-#endif
+
                 var currentDescriptorValue = await characteristic.ReadClientCharacteristicConfigurationDescriptorAsync();
 
                 if ((currentDescriptorValue.Status != GattCommunicationStatus.Success) ||
@@ -278,9 +268,8 @@ namespace MGT.HRM.HRP
                 {
                     // Set the Client Characteristic Configuration Descriptor to enable the device to send notifications
                     // when the Characteristic value changes
-#if DEBUG
+
                     logger.Debug("Setting GattCharacteristic configuration descriptor to enable notifications");
-#endif
 
                     GattCommunicationStatus status =
                         await characteristic.WriteClientCharacteristicConfigurationDescriptorAsync(
@@ -288,9 +277,8 @@ namespace MGT.HRM.HRP
 
                     if (status == GattCommunicationStatus.Unreachable)
                     {
-#if DEBUG
+
                         logger.Debug("Device unreachable");
-#endif
 
                         // Register a PnpObjectWatcher to detect when a connection to the device is established,
                         // such that the application can retry device configuration.
@@ -299,16 +287,12 @@ namespace MGT.HRM.HRP
                 }
                 else
                 {
-#if DEBUG
                     logger.Debug("Configuration successfull");
-#endif
                 }
             }
             catch (Exception e)
             {
-#if DEBUG
                 logger.Warn("Error configuring HRP device", e);
-#endif
 
                 Stop();
                 FireTimeout("Bluetooth HRP device initialization failed");
@@ -318,9 +302,8 @@ namespace MGT.HRM.HRP
 
         private void Characteristic_ValueChanged(GattCharacteristic sender, GattValueChangedEventArgs args)
         {
-#if DEBUG
             logger.Debug($"GattCharacteristic value changed, args = {args}");
-#endif
+
             byte[] data = new byte[args.CharacteristicValue.Length];
 
             DataReader.FromBuffer(args.CharacteristicValue).ReadBytes(data);
@@ -330,9 +313,8 @@ namespace MGT.HRM.HRP
 
         private void ProcessData(byte[] data, DateTimeOffset timestamp)
         {
-#if DEBUG
+
             logger.Debug($"Processing HRP payload, data = {data}");
-#endif
 
             byte currentOffset = 0;
             byte flags = data[currentOffset];
@@ -370,9 +352,7 @@ namespace MGT.HRM.HRP
                 Timestamp = timestamp
             };
 
-#if DEBUG
             logger.Debug($"Constructed HRP packet = {btHrpPacket}");
-#endif
 
             TotalPackets++;
 
@@ -384,9 +364,7 @@ namespace MGT.HRM.HRP
 
         private void ProcessPackets()
         {
-#if DEBUG
             logger.Debug("Processing HRP packets");
-#endif
 
             // Smoothed values computation
             if (heartRateSmoothing[0] == null)
@@ -434,9 +412,8 @@ namespace MGT.HRM.HRP
 
             lastReceivedDate = DateTime.Now;
 
-#if DEBUG
             logger.Debug($"Firing PacketProcessed event, packet = {LastPacket}");
-#endif
+
             PacketProcessedEventArgs args = new PacketProcessedEventArgs(LastPacket);
             base.FirePacketProcessed(args);
         }
@@ -446,28 +423,23 @@ namespace MGT.HRM.HRP
             watcher = PnpObject.CreateWatcher(PnpObjectType.DeviceContainer,
                 new string[] { "System.Devices.Connected" }, String.Empty);
 
-#if DEBUG
             logger.Debug("Registering device connection watcher updated event handler");
-#endif
+
             watcher.Updated += DeviceConnection_Updated;
 
-#if DEBUG
             logger.Debug("Starting device connection watcher");
-#endif
+
             watcher.Start();
         }
 
         private async void DeviceConnection_Updated(PnpObjectWatcher sender, PnpObjectUpdate args)
         {
-#if DEBUG
+
             logger.Debug($"Device connection updated, args = {args}");
-#endif
 
             var connectedProperty = args.Properties["System.Devices.Connected"];
 
-#if DEBUG
             logger.Debug($"Connected property, args = {connectedProperty}");
-#endif
 
             bool isConnected = false;
             if ((deviceContainerId == args.Id) && Boolean.TryParse(connectedProperty.ToString(), out isConnected) &&
@@ -478,16 +450,13 @@ namespace MGT.HRM.HRP
 
                 if (status == GattCommunicationStatus.Success)
                 {
-#if DEBUG
                     logger.Debug("Stopping device connection watcher");
-#endif
 
                     // Once the Client Characteristic Configuration Descriptor is set, the watcher is no longer required
                     watcher.Stop();
                     watcher = null;
-#if DEBUG
+
                     logger.Debug("Configuration successfull");
-#endif
                 }
             }
         }
@@ -503,12 +472,10 @@ namespace MGT.HRM.HRP
             TimeSpan diff = DateTime.Now - lastReceivedDate;
             if (diff > timeout)
             {
-#if DEBUG
                 if (Running)
                     logger.Debug("Communication timeout elapsed");
                 else
                     logger.Debug("Start timeout elapsed");
-#endif
 
                 Stop();
                 FireTimeout("Bluetooth HRP device not transmitting");
@@ -519,47 +486,41 @@ namespace MGT.HRM.HRP
         {
             if (Running)
             {
-#if DEBUG
                 logger.Debug("Stopping HRP");
-#endif
 
                 Running = false;
 
-#if DEBUG
                 logger.Debug("Stopping timeout timer");
-#endif
+
                 timeoutTimer.Stop();
 
                 if (characteristic != null)
                 {
-#if DEBUG
                     logger.Debug("Clearing GattCharacteristic");
-#endif
+
                     characteristic.ValueChanged -= Characteristic_ValueChanged;
                     characteristic = null;
                 }
 
                 if (watcher != null)
                 {
-#if DEBUG
                     logger.Debug("Clearing device changed watcher");
-#endif
+
                     watcher.Stop();
                     watcher = null;
                 }
 
                 if (service != null)
                 {
-#if DEBUG
+
                     logger.Debug("Clearing GattDeviceService");
-#endif
+
                     service.Dispose();
                     service = null;
                 }
 
-#if DEBUG
                 logger.Debug("Resetting counters");
-#endif
+
                 DoReset();
             }
         }
@@ -581,9 +542,8 @@ namespace MGT.HRM.HRP
 
         public override void Reset()
         {
-#if DEBUG
+
             logger.Debug("Resetting HRP");
-#endif
 
             Stop();
             Start();
