@@ -84,7 +84,6 @@ namespace MGT.Cardia
         public override IHRMFileLogger XMLLogger => xmlLogger;
         public override IHRMNetLogger UDPLogger => udpLogger;
         public override DeviceConfiguration.DeviceType ConfigEnumerator => DeviceConfiguration.DeviceType.BtHrp;
-
         public BtHrp BtHrp => btHrp;
 
         public override void InitDevice()

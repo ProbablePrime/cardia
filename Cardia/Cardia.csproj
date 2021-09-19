@@ -30,6 +30,8 @@
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
     <TargetPlatformVersion>10.1</TargetPlatformVersion>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -76,8 +78,11 @@
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
+    <Reference Include="websocket-sharp, Version=1.0.2.59610, Culture=neutral, PublicKeyToken=5660b08a1845a91e, processorArchitecture=MSIL">
+      <HintPath>..\packages\WebSocketSharp.1.0.3-rc10\lib\websocket-sharp.dll</HintPath>
+    </Reference>
     <Reference Include="Windows">
-      <HintPath>..\..\..\Program Files (x86)\Windows Kits\10\UnionMetadata\10.0.15063.0\Windows.winmd</HintPath>
+      <HintPath>C:\Program Files (x86)\Windows Kits\10\UnionMetadata\10.0.19041.0\Windows.winmd</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -87,6 +92,14 @@
     <Compile Include="Bundle\CMS50Bundle.cs" />
     <Compile Include="Bundle\ZephyrHxMBundle.cs" />
     <Compile Include="Model\HRMAlarm.cs" />
+    <Compile Include="Neos\NeosHRM.cs" />
+    <Compile Include="Neos\NeosHRMWebsocketService.cs" />
+    <Compile Include="Neos\Views\NeosForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Neos\Views\NeosForm.Designer.cs">
+      <DependentUpon>NeosForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="View\AboutFrm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -164,6 +177,9 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="Neos\Views\NeosForm.resx">
+      <DependentUpon>NeosForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="View\AboutFrm.resx">
       <DependentUpon>AboutFrm.cs</DependentUpon>
     </EmbeddedResource>
@@ -213,6 +229,7 @@
     <None Include="log4net.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -225,6 +242,8 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Icon.ico" />
+    <None Include="Resources\NeosVR.ico" />
+    <None Include="Resources\Icon.ico" />
     <None Include="Resources\Alarm1.wav" />
     <None Include="Resources\Alarm2.wav" />
     <None Include="Resources\Alarm3.wav" />
