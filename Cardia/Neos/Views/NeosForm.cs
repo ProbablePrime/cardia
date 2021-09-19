@@ -12,8 +12,10 @@ namespace MGT.Cardia.Neos.Views
 {
     public partial class NeosForm : Form
     {
-        public NeosForm()
+        private Cardia cardia;
+        public NeosForm(Cardia cardia)
         {
+            this.cardia = cardia;
             InitializeComponent();
         }
 

@@ -50,13 +50,15 @@
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.miDeviceConfigure = new System.Windows.Forms.ToolStripMenuItem();
             this.alarmToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.logToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.networkToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.abcToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.soundToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.miSoundPlayBeat = new System.Windows.Forms.ToolStripMenuItem();
             this.miSoundPlayAlarm = new System.Windows.Forms.ToolStripMenuItem();
+            this.logToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.networkToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.tCPToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.neosToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.abcToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.nudChartTime)).BeginInit();
             this.contextMenuStrip1.SuspendLayout();
             this.ssBottom.SuspendLayout();
@@ -148,7 +150,7 @@
             // 
             this.ssBottom.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.tslStatus});
-            this.ssBottom.Location = new System.Drawing.Point(0, 213);
+            this.ssBottom.Location = new System.Drawing.Point(0, 212);
             this.ssBottom.Name = "ssBottom";
             this.ssBottom.Size = new System.Drawing.Size(592, 22);
             this.ssBottom.SizingGrip = false;
@@ -170,7 +172,7 @@
             this.pnlControl.Controls.Add(this.nudChartTime);
             this.pnlControl.Controls.Add(this.lbChartTime);
             this.pnlControl.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.pnlControl.Location = new System.Drawing.Point(0, 175);
+            this.pnlControl.Location = new System.Drawing.Point(0, 174);
             this.pnlControl.Name = "pnlControl";
             this.pnlControl.Size = new System.Drawing.Size(592, 38);
             this.pnlControl.TabIndex = 34;
@@ -214,7 +216,7 @@
             this.flpClients.Location = new System.Drawing.Point(0, 24);
             this.flpClients.Margin = new System.Windows.Forms.Padding(0);
             this.flpClients.Name = "flpClients";
-            this.flpClients.Size = new System.Drawing.Size(592, 151);
+            this.flpClients.Size = new System.Drawing.Size(592, 150);
             this.flpClients.TabIndex = 36;
             this.flpClients.Resize += new System.EventHandler(this.flpClients_Resize);
             // 
@@ -270,12 +272,12 @@
             // toolStripSeparator1
             // 
             this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(149, 6);
+            this.toolStripSeparator1.Size = new System.Drawing.Size(145, 6);
             // 
             // miDeviceConfigure
             // 
             this.miDeviceConfigure.Name = "miDeviceConfigure";
-            this.miDeviceConfigure.Size = new System.Drawing.Size(152, 22);
+            this.miDeviceConfigure.Size = new System.Drawing.Size(148, 22);
             this.miDeviceConfigure.Text = "Configuration";
             this.miDeviceConfigure.Click += new System.EventHandler(this.miDeviceConfigure_Click);
             // 
@@ -285,32 +287,6 @@
             this.alarmToolStripMenuItem.Size = new System.Drawing.Size(51, 20);
             this.alarmToolStripMenuItem.Text = "Alarm";
             this.alarmToolStripMenuItem.Click += new System.EventHandler(this.alarmToolStripMenuItem_Click);
-            // 
-            // logToolStripMenuItem
-            // 
-            this.logToolStripMenuItem.Name = "logToolStripMenuItem";
-            this.logToolStripMenuItem.Size = new System.Drawing.Size(39, 20);
-            this.logToolStripMenuItem.Text = "Log";
-            this.logToolStripMenuItem.Click += new System.EventHandler(this.miLog_Click);
-            // 
-            // networkToolStripMenuItem
-            // 
-            this.networkToolStripMenuItem.Name = "networkToolStripMenuItem";
-            this.networkToolStripMenuItem.Size = new System.Drawing.Size(64, 20);
-            this.networkToolStripMenuItem.Text = "Network";
-            this.networkToolStripMenuItem.Click += new System.EventHandler(this.miNetwork_Click);
-            // 
-            // aboutToolStripMenuItem
-            // 
-            this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
-            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(52, 20);
-            this.aboutToolStripMenuItem.Text = "About";
-            this.aboutToolStripMenuItem.Click += new System.EventHandler(this.aboutToolStripMenuItem_Click);
-            // 
-            // abcToolStripMenuItem
-            // 
-            this.abcToolStripMenuItem.Name = "abcToolStripMenuItem";
-            this.abcToolStripMenuItem.Size = new System.Drawing.Size(32, 19);
             // 
             // soundToolStripMenuItem
             // 
@@ -324,22 +300,64 @@
             // miSoundPlayBeat
             // 
             this.miSoundPlayBeat.Name = "miSoundPlayBeat";
-            this.miSoundPlayBeat.Size = new System.Drawing.Size(152, 22);
+            this.miSoundPlayBeat.Size = new System.Drawing.Size(129, 22);
             this.miSoundPlayBeat.Text = "Play beat";
             this.miSoundPlayBeat.Click += new System.EventHandler(this.miSoundPlayBeat_Click);
             // 
             // miSoundPlayAlarm
             // 
             this.miSoundPlayAlarm.Name = "miSoundPlayAlarm";
-            this.miSoundPlayAlarm.Size = new System.Drawing.Size(152, 22);
+            this.miSoundPlayAlarm.Size = new System.Drawing.Size(129, 22);
             this.miSoundPlayAlarm.Text = "Play alarm";
             this.miSoundPlayAlarm.Click += new System.EventHandler(this.miSoundPlayAlarm_Click);
+            // 
+            // logToolStripMenuItem
+            // 
+            this.logToolStripMenuItem.Name = "logToolStripMenuItem";
+            this.logToolStripMenuItem.Size = new System.Drawing.Size(39, 20);
+            this.logToolStripMenuItem.Text = "Log";
+            this.logToolStripMenuItem.Click += new System.EventHandler(this.miLog_Click);
+            // 
+            // networkToolStripMenuItem
+            // 
+            this.networkToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tCPToolStripMenuItem,
+            this.neosToolStripMenuItem});
+            this.networkToolStripMenuItem.Name = "networkToolStripMenuItem";
+            this.networkToolStripMenuItem.Size = new System.Drawing.Size(64, 20);
+            this.networkToolStripMenuItem.Text = "Network";
+            // 
+            // tCPToolStripMenuItem
+            // 
+            this.tCPToolStripMenuItem.Name = "tCPToolStripMenuItem";
+            this.tCPToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.tCPToolStripMenuItem.Text = "TCP";
+            this.tCPToolStripMenuItem.Click += new System.EventHandler(this.miNetwork_Click);
+            // 
+            // neosToolStripMenuItem
+            // 
+            this.neosToolStripMenuItem.Name = "neosToolStripMenuItem";
+            this.neosToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.neosToolStripMenuItem.Text = "Neos / Websockets";
+            this.neosToolStripMenuItem.Click += new System.EventHandler(this.neosToolStripMenuItem_Click);
+            // 
+            // aboutToolStripMenuItem
+            // 
+            this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
+            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(52, 20);
+            this.aboutToolStripMenuItem.Text = "About";
+            this.aboutToolStripMenuItem.Click += new System.EventHandler(this.aboutToolStripMenuItem_Click);
+            // 
+            // abcToolStripMenuItem
+            // 
+            this.abcToolStripMenuItem.Name = "abcToolStripMenuItem";
+            this.abcToolStripMenuItem.Size = new System.Drawing.Size(32, 19);
             // 
             // CardiaFrm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(592, 235);
+            this.ClientSize = new System.Drawing.Size(592, 234);
             this.ContextMenuStrip = this.contextMenuStrip1;
             this.Controls.Add(this.flpClients);
             this.Controls.Add(this.pnlControl);
@@ -401,5 +419,7 @@
         private System.Windows.Forms.ToolStripMenuItem soundToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem miSoundPlayBeat;
         private System.Windows.Forms.ToolStripMenuItem miSoundPlayAlarm;
+        private System.Windows.Forms.ToolStripMenuItem tCPToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem neosToolStripMenuItem;
     }
 }

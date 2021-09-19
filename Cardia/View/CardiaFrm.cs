@@ -9,6 +9,8 @@ using MGT.HRM.Zephyr_HxM;
 using System.Collections.Concurrent;
 using MGT.HRM.CMS50;
 using MGT.HRM.HRP;
+using MGT.Cardia.Neos;
+using MGT.Cardia.Neos.Views;
 
 namespace MGT.Cardia
 {
@@ -63,6 +65,8 @@ namespace MGT.Cardia
             InitializeLogPanel();
             InitializeNetworkPanel();
             InitializeColors();
+
+            InitializeNeosForm();
         }
 
         private void InitializeDevices()
@@ -542,6 +546,8 @@ namespace MGT.Cardia
         NetworkFrm networkPanel;
         IDictionary<int, ECGDisplay> displays = new ConcurrentDictionary<int, ECGDisplay>();
 
+        NeosForm neosForm;
+
         private bool InitializeNetworkPanel()
         {
             networkPanel = new NetworkFrm(cardia);
@@ -551,6 +557,13 @@ namespace MGT.Cardia
             cardia.NetworkClientDisconnected += cardia_NetworkClientDisconnected;
             cardia.NetworkMessageReceived += cardia_NetworkMessageReceived;
             cardia.ClientSignalGenerated += cardia_ClientSignalGenerated;
+
+            return true;
+        }
+
+        private bool InitializeNeosForm()
+        {
+            neosForm = new NeosForm(cardia);
 
             return true;
         }
@@ -675,5 +688,11 @@ namespace MGT.Cardia
         }
 
         #endregion Networking
+
+        private void neosToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            neosForm.Show();
+            neosForm.Focus();
+        }
     }
 }
