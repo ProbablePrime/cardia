@@ -17,7 +17,7 @@ namespace MGT.HRM.HRP
         private String deviceContainerId;
 
         private GattDeviceService service;
-        private GattCharacteristic characteristic;
+        private GattCharacteristic actualHRCharacteristic;
         private PnpObjectWatcher watcher;
         private const GattClientCharacteristicConfigurationDescriptorValue CHARACTERISTIC_NOTIFICATION_TYPE = GattClientCharacteristicConfigurationDescriptorValue.Notify;
 
@@ -39,13 +39,12 @@ namespace MGT.HRM.HRP
                 if (Running)
                     throw new Exception();
 
-                int backup = characteristicIndex;
-
-                characteristicIndex = value;
-
-                if (backup != value)
+                if (characteristicIndex != value)
+                {
+                    characteristicIndex = value;
                     if (CharacteristicIndexChanged != null)
                         CharacteristicIndexChanged(this, value);
+                }   
             }
         }
 
@@ -65,18 +64,14 @@ namespace MGT.HRM.HRP
                 if (Running)
                     throw new Exception();
 
-                int backup = initDelay;
-
-                initDelay = value;
-
-                if (backup != value)
+                if (initDelay != value)
+                {
+                    initDelay = value;
                     if (InitDelayChanged != null)
                         InitDelayChanged(this, value);
+                }
             }
         }
-
-        private const byte HEART_RATE_VALUE_FORMAT = 0x01;
-        private const byte ENERGY_EXPANDED_STATUS = 0x08;
 
         public override string Name
         {
@@ -227,24 +222,26 @@ namespace MGT.HRM.HRP
                 // Obtain the characteristic for which notifications are to be received
                 logger.Debug($"Getting HeartRateMeasurement GattCharacteristic {characteristicIndex}");
 
-                GattCharacteristicsResult result = await service.GetCharacteristicsForUuidAsync(GattCharacteristicUuids.HeartRateMeasurement);
 
-                logger.Debug($"GattCharacteristicsResult status {result.Status}");
-                foreach (GattCharacteristic hrCharacteristic in result.Characteristics)
+                // HR Stuff
+                GattCharacteristicsResult hrCharacteristicResult = await service.GetCharacteristicsForUuidAsync(GattCharacteristicUuids.HeartRateMeasurement);
+
+                logger.Debug($"GattCharacteristicsResult status {hrCharacteristicResult.Status}");
+                foreach (GattCharacteristic hrCharacteristic in hrCharacteristicResult.Characteristics)
                 {
                     logger.Debug($"GattCharacteristic {hrCharacteristic.Uuid}: " +
                         $"description = {hrCharacteristic.UserDescription}, " +
                         $"protection level = {hrCharacteristic.ProtectionLevel}");
                 }
 
-                characteristic = result.Characteristics[characteristicIndex];
+                actualHRCharacteristic = hrCharacteristicResult.Characteristics[characteristicIndex];
 
                 // While encryption is not required by all devices, if encryption is supported by the device,
                 // it can be enabled by setting the ProtectionLevel property of the Characteristic object.
                 // All subsequent operations on the characteristic will work over an encrypted link.
                 logger.Debug("Setting EncryptionRequired protection level on GattCharacteristic");
 
-                characteristic.ProtectionLevel = GattProtectionLevel.EncryptionRequired;
+                actualHRCharacteristic.ProtectionLevel = GattProtectionLevel.EncryptionRequired;
 
                 // Register the event handler for receiving notifications
                 if (initDelay > 0)
@@ -252,7 +249,7 @@ namespace MGT.HRM.HRP
 
                 logger.Debug("Registering event handler onction level on GattCharacteristic");
 
-                characteristic.ValueChanged += Characteristic_ValueChanged;
+                actualHRCharacteristic.ValueChanged += Characteristic_ValueChanged;
 
                 // In order to avoid unnecessary communication with the device, determine if the device is already 
                 // correctly configured to send notifications.
@@ -261,7 +258,7 @@ namespace MGT.HRM.HRP
 
                 logger.Debug("Reading GattCharacteristic configuration descriptor");
 
-                var currentDescriptorValue = await characteristic.ReadClientCharacteristicConfigurationDescriptorAsync();
+                var currentDescriptorValue = await actualHRCharacteristic.ReadClientCharacteristicConfigurationDescriptorAsync();
 
                 if ((currentDescriptorValue.Status != GattCommunicationStatus.Success) ||
                     (currentDescriptorValue.ClientCharacteristicConfigurationDescriptor != CHARACTERISTIC_NOTIFICATION_TYPE))
@@ -272,7 +269,7 @@ namespace MGT.HRM.HRP
                     logger.Debug("Setting GattCharacteristic configuration descriptor to enable notifications");
 
                     GattCommunicationStatus status =
-                        await characteristic.WriteClientCharacteristicConfigurationDescriptorAsync(
+                        await actualHRCharacteristic.WriteClientCharacteristicConfigurationDescriptorAsync(
                         CHARACTERISTIC_NOTIFICATION_TYPE);
 
                     if (status == GattCommunicationStatus.Unreachable)
@@ -314,52 +311,7 @@ namespace MGT.HRM.HRP
         private void ProcessData(byte[] data, DateTimeOffset timestamp)
         {
 
-            logger.Debug($"Processing HRP payload, data = {data}");
-
-            byte currentOffset = 0;
-            byte flags = data[currentOffset];
-            bool isHeartRateValueSizeLong = ((flags & HEART_RATE_VALUE_FORMAT) != 0);
-            bool hasEnergyExpended = ((flags & ENERGY_EXPANDED_STATUS) != 0);
-
-            currentOffset++;
-
-            ushort heartRateMeasurementValue = 0;
-
-            if (isHeartRateValueSizeLong)
-            {
-                heartRateMeasurementValue = (ushort)((data[currentOffset + 1] << 8) + data[currentOffset]);
-                currentOffset += 2;
-            }
-            else
-            {
-                heartRateMeasurementValue = data[currentOffset];
-                currentOffset++;
-            }
-
-            ushort expendedEnergyValue = 0;
-
-            if (hasEnergyExpended)
-            {
-                expendedEnergyValue = (ushort)((data[currentOffset + 1] << 8) + data[currentOffset]);
-                currentOffset += 2;
-            }
-
-            BtHrpPacket btHrpPacket = new BtHrpPacket
-            {
-                HeartRate = heartRateMeasurementValue,
-                HasExpendedEnergy = hasEnergyExpended,
-                ExpendedEnergy = expendedEnergyValue,
-                Timestamp = timestamp
-            };
-
-            logger.Debug($"Constructed HRP packet = {btHrpPacket}");
-
-            TotalPackets++;
-
-            secondLastPacket = lastPacket;
-            lastPacket = btHrpPacket;
-
-            ProcessPackets();
+           
         }
 
         private void ProcessPackets()
@@ -445,7 +397,7 @@ namespace MGT.HRM.HRP
             if ((deviceContainerId == args.Id) && Boolean.TryParse(connectedProperty.ToString(), out isConnected) &&
                 isConnected)
             {
-                var status = await characteristic.WriteClientCharacteristicConfigurationDescriptorAsync(
+                var status = await actualHRCharacteristic.WriteClientCharacteristicConfigurationDescriptorAsync(
                     CHARACTERISTIC_NOTIFICATION_TYPE);
 
                 if (status == GattCommunicationStatus.Success)
@@ -494,12 +446,12 @@ namespace MGT.HRM.HRP
 
                 timeoutTimer.Stop();
 
-                if (characteristic != null)
+                if (actualHRCharacteristic != null)
                 {
                     logger.Debug("Clearing GattCharacteristic");
 
-                    characteristic.ValueChanged -= Characteristic_ValueChanged;
-                    characteristic = null;
+                    actualHRCharacteristic.ValueChanged -= Characteristic_ValueChanged;
+                    actualHRCharacteristic = null;
                 }
 
                 if (watcher != null)
@@ -551,10 +503,10 @@ namespace MGT.HRM.HRP
 
         public override void Dispose()
         {
-            if (characteristic != null)
+            if (actualHRCharacteristic != null)
             {
-                characteristic.ValueChanged -= Characteristic_ValueChanged;
-                characteristic = null;
+                actualHRCharacteristic.ValueChanged -= Characteristic_ValueChanged;
+                actualHRCharacteristic = null;
             }
 
             if (watcher != null)
