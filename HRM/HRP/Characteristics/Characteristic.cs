@@ -7,7 +7,7 @@ using Windows.Devices.Bluetooth.GenericAttributeProfile;
 
 namespace MGT.HRM.HRP.Characteristics
 {
-    public abstract class Characteristic<T>
+    public abstract class Characteristic<T>: IDisposable
     {
         private static GattClientCharacteristicConfigurationDescriptorValue CHARACTERISTIC_NOTIFICATION_TYPE = GattClientCharacteristicConfigurationDescriptorValue.Notify;
 
@@ -18,7 +18,7 @@ namespace MGT.HRM.HRP.Characteristics
 
         public T Value;
 
-        T lastValue;
+        private T lastValue;
 
         
         public T LastValue
@@ -113,5 +113,26 @@ namespace MGT.HRM.HRP.Characteristics
                     await this.GattCharacteristic.WriteClientCharacteristicConfigurationDescriptorAsync(
                     CHARACTERISTIC_NOTIFICATION_TYPE);
             }
+        }
+
+        public void Stop()
+        {
+            if (this.GattCharacteristic != null)
+            {
+                this.GattCharacteristic.ValueChanged -= GattCharacteristicValueChangedWrapper;
+                this.GattCharacteristic = null;
+            }
+        }
+
+        public void Reset()
+        {
+            this.Packets = 0;
+            this.LastValue = default(T);
+        }
+
+        public void Dispose()
+        {
+            this.Stop();
+        }
     }
 }

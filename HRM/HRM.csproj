@@ -94,7 +94,7 @@
     <Compile Include="HRP\BtHrpLoggerCSV.cs" />
     <Compile Include="HRP\BtHrpLoggerXLSX.cs" />
     <Compile Include="HRP\BtHrpLoggerXML.cs" />
-    <Compile Include="HRP\BtValues\HeartRate.cs" />
+    <Compile Include="HRP\BtValues\HeartRateBtValue.cs" />
     <Compile Include="HRP\Characteristics\Characteristic.cs" />
     <Compile Include="HRP\Characteristics\HeartRateCharacteristic.cs" />
     <Compile Include="IHRMNetLogger.cs" />

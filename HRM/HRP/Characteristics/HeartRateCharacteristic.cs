@@ -9,7 +9,7 @@ using Windows.Storage.Streams;
 
 namespace MGT.HRM.HRP.Characteristics
 {
-    public class HeartRateCharacteristic : Characteristic<HeartRate>
+    public class HeartRateCharacteristic : Characteristic<HeartRateBtValue>
     {
         private const byte HEART_RATE_VALUE_FORMAT = 0x01;
         private const byte ENERGY_EXPANDED_STATUS = 0x08;
@@ -61,14 +61,14 @@ namespace MGT.HRM.HRP.Characteristics
             SmoothingData.Enqueue(heartRateMeasurementValue);
 
 
-            var hr = new HeartRate
+            var hr = new HeartRateBtValue
             {
-                Value = heartRateMeasurementValue,
+                HeartRate = heartRateMeasurementValue,
                 HasExpendedEnergy = hasEnergyExpended,
                 ExpendedEnergy = expendedEnergyValue,
                 Timestamp = args.Timestamp,
-                MinHeartRate = Math.Min(LastValue.Value, heartRateMeasurementValue),
-                MaxHeartRate = Math.Max(LastValue.Value, heartRateMeasurementValue),
+                MinHeartRate = Math.Min(LastValue.HeartRate, heartRateMeasurementValue),
+                MaxHeartRate = Math.Max(LastValue.HeartRate, heartRateMeasurementValue),
                 SmoothedHeartRate = (int)SmoothingData.Average()
             };
             LastValue = Value;

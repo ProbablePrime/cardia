@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace MGT.HRM.HRP.BtValues
 {
-    public class HeartRate
+    public class HeartRateBtValue : IHRMPacket
     {
-        public int Value;
+        public int HeartRate { get; set; }
         public bool HasExpendedEnergy;
         public int ExpendedEnergy;
         public DateTimeOffset Timestamp;

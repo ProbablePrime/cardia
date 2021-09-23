@@ -87,59 +87,15 @@ namespace MGT.HRM.HRP
         {
             Running = false;
 
-            heartRateSmoothing = new int?[1];
-
             TotalPackets = 0;
             CorruptedPackets = 0;
-            HeartBeats = 0;
 
             timeoutTimer.Elapsed += timeoutTimer_Elapsed;
         }
 
-        private BtHrpPacket lastPacket;
-        public override IHRMPacket LastPacket
-        {
-            get
-            {
-                return lastPacket;
-            }
-            protected set
-            {
-                lastPacket = (BtHrpPacket)value;
-            }
-        }
-
-        private BtHrpPacket secondLastPacket;
 
         public override int TotalPackets { get; protected set; }
         public override int CorruptedPackets { get; protected set; }
-
-        // Processed data
-        public override int HeartBeats { get; protected set; }
-
-        public override byte? MinHeartRate { get; protected set; }
-        public override byte? MaxHeartRate { get; protected set; }
-
-        private int?[] heartRateSmoothing;
-        public override int HeartRateSmoothingFactor
-        {
-            get
-            {
-                return heartRateSmoothing.Length;
-            }
-
-            set
-            {
-                if (Running)
-                    throw new Exception();
-
-                if (value < 1)
-                    value = 1;
-
-                heartRateSmoothing = new int?[value];
-            }
-        }
-        public override double SmoothedHeartRate { get; protected set; }
 
         public override bool Running { get; protected set; }
 
@@ -181,6 +137,7 @@ namespace MGT.HRM.HRP
             timeoutTimer.Start();
             Running = true;
 
+            //TODO: Write Characteristic listener
             await ConfigureServiceForNotificationsAsync();
         }
 
@@ -218,46 +175,8 @@ namespace MGT.HRM.HRP
                         $"description = {allCharacteristic.UserDescription}, " +
                         $"protection level = {allCharacteristic.ProtectionLevel}");
                 }
-
-                // Obtain the characteristic for which notifications are to be received
-                logger.Debug($"Getting HeartRateMeasurement GattCharacteristic {characteristicIndex}");
-
-
-                // HR Stuff
-                GattCharacteristicsResult hrCharacteristicResult = await service.GetCharacteristicsForUuidAsync(GattCharacteristicUuids.HeartRateMeasurement);
-
-                logger.Debug($"GattCharacteristicsResult status {hrCharacteristicResult.Status}");
-                foreach (GattCharacteristic hrCharacteristic in hrCharacteristicResult.Characteristics)
-                {
-                    logger.Debug($"GattCharacteristic {hrCharacteristic.Uuid}: " +
-                        $"description = {hrCharacteristic.UserDescription}, " +
-                        $"protection level = {hrCharacteristic.ProtectionLevel}");
-                }
-
-                actualHRCharacteristic = hrCharacteristicResult.Characteristics[characteristicIndex];
-
-                // While encryption is not required by all devices, if encryption is supported by the device,
-                // it can be enabled by setting the ProtectionLevel property of the Characteristic object.
-                // All subsequent operations on the characteristic will work over an encrypted link.
-                logger.Debug("Setting EncryptionRequired protection level on GattCharacteristic");
-
-                actualHRCharacteristic.ProtectionLevel = GattProtectionLevel.EncryptionRequired;
-
-                // Register the event handler for receiving notifications
-                if (initDelay > 0)
-                    await Task.Delay(initDelay);
-
-                logger.Debug("Registering event handler onction level on GattCharacteristic");
-
-                actualHRCharacteristic.ValueChanged += Characteristic_ValueChanged;
-
-                // In order to avoid unnecessary communication with the device, determine if the device is already 
-                // correctly configured to send notifications.
-                // By default ReadClientCharacteristicConfigurationDescriptorAsync will attempt to get the current
-                // value from the system cache and communication with the device is not typically required.
-
-                logger.Debug("Reading GattCharacteristic configuration descriptor");
-
+            
+                //TODO
                 var currentDescriptorValue = await actualHRCharacteristic.ReadClientCharacteristicConfigurationDescriptorAsync();
 
                 if ((currentDescriptorValue.Status != GattCommunicationStatus.Success) ||
@@ -297,75 +216,9 @@ namespace MGT.HRM.HRP
             }
         }
 
-        private void Characteristic_ValueChanged(GattCharacteristic sender, GattValueChangedEventArgs args)
-        {
-            logger.Debug($"GattCharacteristic value changed, args = {args}");
-
-            byte[] data = new byte[args.CharacteristicValue.Length];
-
-            DataReader.FromBuffer(args.CharacteristicValue).ReadBytes(data);
-
-            ProcessData(data, args.Timestamp);
-        }
-
-        private void ProcessData(byte[] data, DateTimeOffset timestamp)
-        {
-
-           
-        }
-
         private void ProcessPackets()
         {
-            logger.Debug("Processing HRP packets");
-
-            // Smoothed values computation
-            if (heartRateSmoothing[0] == null)
-            {
-                for (int i = 0; i < heartRateSmoothing.Length; i++)
-                {
-                    heartRateSmoothing[i] = lastPacket.HeartRate;
-                }
-
-                SmoothedHeartRate = lastPacket.HeartRate;
-            }
-            else
-            {
-                int?[] shiftedArray = new int?[heartRateSmoothing.Length];
-                Array.Copy(heartRateSmoothing, 0, shiftedArray, 1, heartRateSmoothing.Length - 1);
-                heartRateSmoothing = shiftedArray;
-                heartRateSmoothing[0] = lastPacket.HeartRate;
-
-                double d = 0;
-                for (int i = 0; i < heartRateSmoothing.Length; i++)
-                {
-                    d += heartRateSmoothing[i] ?? 0;
-                }
-                SmoothedHeartRate = d / heartRateSmoothing.Length;
-            }
-
-            // Computation across multiple packets
-            if (MinHeartRate == null && lastPacket.HeartRate > 30)
-                MinHeartRate = (byte)lastPacket.HeartRate;
-            else if (lastPacket.HeartRate < MinHeartRate && lastPacket.HeartRate > 30)
-                MinHeartRate = (byte)lastPacket.HeartRate;
-
-            if (MaxHeartRate == null && lastPacket.HeartRate < 240)
-                MaxHeartRate = (byte)lastPacket.HeartRate;
-            else if (lastPacket.HeartRate > MaxHeartRate && lastPacket.HeartRate < 240)
-                MaxHeartRate = (byte)lastPacket.HeartRate;
-
-            if (secondLastPacket == null)
-            {
-                HeartBeats = 1;
-                return;
-            }
-
-            ++HeartBeats;
-
-            lastReceivedDate = DateTime.Now;
-
             logger.Debug($"Firing PacketProcessed event, packet = {LastPacket}");
-
             PacketProcessedEventArgs args = new PacketProcessedEventArgs(LastPacket);
             base.FirePacketProcessed(args);
         }
@@ -446,13 +299,7 @@ namespace MGT.HRM.HRP
 
                 timeoutTimer.Stop();
 
-                if (actualHRCharacteristic != null)
-                {
-                    logger.Debug("Clearing GattCharacteristic");
-
-                    actualHRCharacteristic.ValueChanged -= Characteristic_ValueChanged;
-                    actualHRCharacteristic = null;
-                }
+                // Call Stop on All Characteristics
 
                 if (watcher != null)
                 {
@@ -480,16 +327,6 @@ namespace MGT.HRM.HRP
         private void DoReset()
         {
             TotalPackets = 0;
-            CorruptedPackets = 0;
-            HeartBeats = 0;
-            MinHeartRate = null;
-            MaxHeartRate = null;
-
-            for (int i = 0; i < heartRateSmoothing.Length; i++)
-            {
-                heartRateSmoothing[i] = null;
-            }
-            SmoothedHeartRate = 0;
         }
 
         public override void Reset()
@@ -503,12 +340,6 @@ namespace MGT.HRM.HRP
 
         public override void Dispose()
         {
-            if (actualHRCharacteristic != null)
-            {
-                actualHRCharacteristic.ValueChanged -= Characteristic_ValueChanged;
-                actualHRCharacteristic = null;
-            }
-
             if (watcher != null)
             {
                 watcher.Stop();
