@@ -13,12 +13,14 @@ namespace MGT.HRM.HRP.Characteristics
     {
         private const byte HEART_RATE_VALUE_FORMAT = 0x01;
         private const byte ENERGY_EXPANDED_STATUS = 0x08;
+        
 
         private Queue<int> SmoothingData = new Queue<int>(5);
 
         public HeartRateCharacteristic(GattDeviceService service) : base(service)
         {
-
+            TargetGuid = GattCharacteristicUuids.HeartRateMeasurement;
+            LastValue = new HeartRateBtValue();
         }
 
         protected override void GattCharacteristicValueChanged(GattCharacteristic sender, GattValueChangedEventArgs args)
@@ -67,12 +69,27 @@ namespace MGT.HRM.HRP.Characteristics
                 HasExpendedEnergy = hasEnergyExpended,
                 ExpendedEnergy = expendedEnergyValue,
                 Timestamp = args.Timestamp,
-                MinHeartRate = Math.Min(LastValue.HeartRate, heartRateMeasurementValue),
-                MaxHeartRate = Math.Max(LastValue.HeartRate, heartRateMeasurementValue),
                 SmoothedHeartRate = (int)SmoothingData.Average()
             };
-            LastValue = Value;
+            if (LastValue != null) {
+                if (LastValue.MinHeartRate != 0)
+                {
+                    hr.MinHeartRate = Math.Min(LastValue.MinHeartRate, hr.HeartRate);
+                } else
+                {
+                    hr.MinHeartRate = hr.HeartRate;
+                }
+                
+                hr.MaxHeartRate = Math.Max(LastValue.MaxHeartRate, hr.HeartRate);
+            } else
+            {
+                hr.MinHeartRate = hr.HeartRate;
+                hr.MaxHeartRate = hr.HeartRate;
+            }
+            if (Value != null)
+                LastValue = Value;
             Value = hr;
+
             this.ValueUpdated.Invoke(Value);
             // logger.Debug($"Constructed HRP packet = {btHrpPacket}");
         }

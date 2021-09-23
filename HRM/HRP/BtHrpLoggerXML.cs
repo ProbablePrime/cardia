@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Xml;
 using System.IO;
+using MGT.HRM.HRP.BtValues;
 
 namespace MGT.HRM.HRP
 {
@@ -68,7 +69,7 @@ namespace MGT.HRM.HRP
             Dispose();
         }
 
-        protected override void BtHrpLog(BtHrpPacket btHrpPacketPacket)
+        protected override void BtHrpLog(HeartRateBtValue btHrpPacketPacket)
         {
             DateTime timestamp = DateTime.Now;
 
@@ -91,7 +92,7 @@ namespace MGT.HRM.HRP
             write(btHrpPacketPacket, timestamp);
         }
 
-        private void write(BtHrpPacket btHrpPacketPacket, DateTime timestamp)
+        private void write(HeartRateBtValue btHrpPacketPacket, DateTime timestamp)
         {
             xmlWriter.WriteStartElement("Record");
             xmlWriter.WriteStartAttribute("time");

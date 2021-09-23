@@ -112,7 +112,7 @@ namespace MGT.Cardia
                 logger.Log(e.HRMPacket);
             }
 
-            if (PacketProcessed != null)
+            if (PacketProcessed != null && e.HRMPacket != null)
                 PacketProcessed(this, new HRMStatus(bundle.Device, e.HRMPacket));
         }
 

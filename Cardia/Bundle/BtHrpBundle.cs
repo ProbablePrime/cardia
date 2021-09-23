@@ -109,9 +109,9 @@ namespace MGT.Cardia
                     }
                 }
             }
-
-            btHrp.CharacteristicIndex = deviceConfiguration.BtHrp.CharacteristicIndex;
-            btHrp.InitDelay = deviceConfiguration.BtHrp.InitDelay;
+            //TODO
+            ///btHrp.CharacteristicIndex = deviceConfiguration.BtHrp.CharacteristicIndex;
+            //btHrp.InitDelay = deviceConfiguration.BtHrp.InitDelay;
 
             udpLogger.Address = logConfiguration.Address;
             udpLogger.Port = logConfiguration.Port;
@@ -122,8 +122,9 @@ namespace MGT.Cardia
             deviceConfiguration.Type = Configuration.DeviceConfiguration.DeviceType.BtHrp;
             if (btHrp.Device != null)
                 deviceConfiguration.BtHrp.DeviceId = btHrp.Device.Id;
-            deviceConfiguration.BtHrp.CharacteristicIndex = btHrp.CharacteristicIndex;
-            deviceConfiguration.BtHrp.InitDelay = btHrp.InitDelay;
+            //TODO
+            //deviceConfiguration.BtHrp.CharacteristicIndex = btHrp.CharacteristicIndex;
+            //deviceConfiguration.BtHrp.InitDelay = btHrp.InitDelay;
         }
     }
 }

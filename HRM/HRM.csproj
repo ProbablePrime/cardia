@@ -100,7 +100,6 @@
     <Compile Include="IHRMNetLogger.cs" />
     <Compile Include="IHRMFileLogger.cs" />
     <Compile Include="LogFormat.cs" />
-    <Compile Include="HRP\BtHrpPacket.cs" />
     <Compile Include="PacketProcessedEventArgs.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Zephyr HxM\ZephyrHxM.cs" />

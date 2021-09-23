@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using MGT.HRM.HRP.BtValues;
 using MGT.Utilities.EventHandlers;
 
 namespace MGT.HRM.HRP
@@ -55,9 +56,9 @@ namespace MGT.HRM.HRP
 
         public void Log(IHRMPacket hrmPacket)
         {
-            BtHrpPacket btHrpPacket;
-            if (hrmPacket is BtHrpPacket)
-                btHrpPacket = (BtHrpPacket)hrmPacket;
+            HeartRateBtValue btHrpPacket;
+            if (hrmPacket is HeartRateBtValue)
+                btHrpPacket = (HeartRateBtValue)hrmPacket;
             else
                 throw new Exception("Invalid IHRMPacket, BtHrpPacket expected");
 
@@ -69,7 +70,7 @@ namespace MGT.HRM.HRP
             LoggerStatusChanged = null;
         }
 
-        protected abstract void BtHrpLog(BtHrpPacket btHrpPacket);
+        protected abstract void BtHrpLog(HeartRateBtValue btHrpPacket);
 
         public abstract void Dispose();
     }

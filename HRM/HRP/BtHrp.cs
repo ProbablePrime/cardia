@@ -1,5 +1,8 @@
 ﻿using log4net;
+using MGT.HRM.HRP.BtValues;
+using MGT.HRM.HRP.Characteristics;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Timers;
 using Windows.Devices.Bluetooth.GenericAttributeProfile;
@@ -17,61 +20,13 @@ namespace MGT.HRM.HRP
         private String deviceContainerId;
 
         private GattDeviceService service;
-        private GattCharacteristic actualHRCharacteristic;
+
         private PnpObjectWatcher watcher;
         private const GattClientCharacteristicConfigurationDescriptorValue CHARACTERISTIC_NOTIFICATION_TYPE = GattClientCharacteristicConfigurationDescriptorValue.Notify;
 
-        // Heart Rate devices typically have only one Heart Rate Measurement characteristic.
-        // Make sure to check your device's documentation to find out how many characteristics your specific device has.
-        private int characteristicIndex = 0;
-
-        public delegate void CharacteristicIndexChangedEventHandler(object sender, int characteristicIndex);
-        public event CharacteristicIndexChangedEventHandler CharacteristicIndexChanged;
-
-        public int CharacteristicIndex
-        {
-            get
-            {
-                return characteristicIndex;
-            }
-            set
-            {
-                if (Running)
-                    throw new Exception();
-
-                if (characteristicIndex != value)
-                {
-                    characteristicIndex = value;
-                    if (CharacteristicIndexChanged != null)
-                        CharacteristicIndexChanged(this, value);
-                }   
-            }
-        }
+        private HeartRateCharacteristic HeartRateCharacteristic;
 
         private int initDelay = 500;
-
-        public delegate void InitDelayChangedEventHandler(object sender, int delay);
-        public event InitDelayChangedEventHandler InitDelayChanged;
-
-        public int InitDelay
-        {
-            get
-            {
-                return initDelay;
-            }
-            set
-            {
-                if (Running)
-                    throw new Exception();
-
-                if (initDelay != value)
-                {
-                    initDelay = value;
-                    if (InitDelayChanged != null)
-                        InitDelayChanged(this, value);
-                }
-            }
-        }
 
         public override string Name
         {
@@ -99,6 +54,8 @@ namespace MGT.HRM.HRP
 
         public override bool Running { get; protected set; }
 
+        public delegate void DeviceChangedEventHandler(object sender, DeviceInformation device);
+        public event DeviceChangedEventHandler DeviceChanged;
         public DeviceInformation Device
         {
             get
@@ -121,9 +78,17 @@ namespace MGT.HRM.HRP
                         DeviceChanged(this, value);
             }
         }
+        
 
-        public delegate void DeviceChangedEventHandler(object sender, DeviceInformation device);
-        public event DeviceChangedEventHandler DeviceChanged;
+        public override IHRMPacket LastPacket { get => HeartRateCharacteristic.LastValue; protected set => throw new NotImplementedException(); }
+        public override int HeartBeats { get => HeartRateCharacteristic.Packets; protected set => throw new NotImplementedException(); }
+        public override byte? MinHeartRate { get => (byte)HeartRateCharacteristic.Value.MinHeartRate; protected set => throw new NotImplementedException(); }
+        public override byte? MaxHeartRate { get => (byte)HeartRateCharacteristic.Value.MaxHeartRate; protected set => throw new NotImplementedException(); }
+
+        // TODO
+        private int smooth;
+        public override int HeartRateSmoothingFactor { get => 1; set => smooth = value; }
+        public override double SmoothedHeartRate { get => HeartRateCharacteristic.Value.SmoothedHeartRate; protected set => throw new NotImplementedException(); }
 
         public override async void Start()
         {
@@ -137,74 +102,48 @@ namespace MGT.HRM.HRP
             timeoutTimer.Start();
             Running = true;
 
-            //TODO: Write Characteristic listener
-            await ConfigureServiceForNotificationsAsync();
+            await SetupCharacteristicsAsync();
         }
 
-        private async Task ConfigureServiceForNotificationsAsync()
+        private async Task LogAllCharacteristics()
+        {
+            // List all the characteristics of the device
+            logger.Debug("Getting all GattCharacteristic...");
+            GattCharacteristicsResult allResult = await service.GetCharacteristicsAsync();
+            logger.Debug($"GattCharacteristicsResult status {allResult.Status}");
+            foreach (GattCharacteristic allCharacteristic in allResult.Characteristics)
+            {
+                logger.Debug($"GattCharacteristic {allCharacteristic.Uuid}: " +
+                 $"description = {allCharacteristic.UserDescription}, " +
+                 $"protection level = {allCharacteristic.ProtectionLevel}");
+            }
+        }
+
+        private async Task SetupCharacteristicsAsync()
         {          
             try
             {
                 logger.Debug($"Getting GattDeviceService {device.Name} with id {device.Id}");
 
-                service = await GattDeviceService.FromIdAsync(device.Id);
                 if (initDelay > 0)
                     await Task.Delay(initDelay);
 
-                if (service != null)
-                {
-                    logger.Debug($"GattDeviceService instatiated successfully");
+                service = await GattDeviceService.FromIdAsync(device.Id);
 
-                    logger.Debug($"GattSession status = {service.Session.SessionStatus}, " +
-                    $"mantain connection = {service.Session.MaintainConnection}, " +
-                    $"can mantain connection = {service.Session.MaintainConnection}");
-                }
-                else
+                if (service == null)
                 {
                     logger.Debug($"Failed to instantiate GattDeviceService");
+                    return;
                 }
+                logger.Debug($"GattDeviceService instatiated successfully");
 
-                // List all the characteristics of the device
+                logger.Debug($"GattSession status = {service.Session.SessionStatus}, " +
+                    $"mantain connection = {service.Session.MaintainConnection}, " +
+                    $"can mantain connection = {service.Session.MaintainConnection}");
 
-                logger.Debug("Getting all GattCharacteristic...");
-                GattCharacteristicsResult allResult = await service.GetCharacteristicsAsync();
-                logger.Debug($"GattCharacteristicsResult status {allResult.Status}");
-                foreach (GattCharacteristic allCharacteristic in allResult.Characteristics)
-                {
-                    logger.Debug($"GattCharacteristic {allCharacteristic.Uuid}: " +
-                        $"description = {allCharacteristic.UserDescription}, " +
-                        $"protection level = {allCharacteristic.ProtectionLevel}");
-                }
-            
-                //TODO
-                var currentDescriptorValue = await actualHRCharacteristic.ReadClientCharacteristicConfigurationDescriptorAsync();
-
-                if ((currentDescriptorValue.Status != GattCommunicationStatus.Success) ||
-                    (currentDescriptorValue.ClientCharacteristicConfigurationDescriptor != CHARACTERISTIC_NOTIFICATION_TYPE))
-                {
-                    // Set the Client Characteristic Configuration Descriptor to enable the device to send notifications
-                    // when the Characteristic value changes
-
-                    logger.Debug("Setting GattCharacteristic configuration descriptor to enable notifications");
-
-                    GattCommunicationStatus status =
-                        await actualHRCharacteristic.WriteClientCharacteristicConfigurationDescriptorAsync(
-                        CHARACTERISTIC_NOTIFICATION_TYPE);
-
-                    if (status == GattCommunicationStatus.Unreachable)
-                    {
-
-                        logger.Debug("Device unreachable");
-
-                        // Register a PnpObjectWatcher to detect when a connection to the device is established,
-                        // such that the application can retry device configuration.
-                        StartDeviceConnectionWatcher();
-                    }
-                }
-                else
-                {
-                    logger.Debug("Configuration successfull");
-                }
+                HeartRateCharacteristic = new HeartRateCharacteristic(service);
+                await HeartRateCharacteristic.Setup();
+                HeartRateCharacteristic.ValueUpdated += ElevateProcessedPacket;
             }
             catch (Exception e)
             {
@@ -216,10 +155,11 @@ namespace MGT.HRM.HRP
             }
         }
 
-        private void ProcessPackets()
+        private void ElevateProcessedPacket(HeartRateBtValue value)
         {
-            logger.Debug($"Firing PacketProcessed event, packet = {LastPacket}");
-            PacketProcessedEventArgs args = new PacketProcessedEventArgs(LastPacket);
+            logger.Debug($"Firing PacketProcessed event, packet = {value}");
+            lastReceivedDate = DateTime.Now;
+            PacketProcessedEventArgs args = new PacketProcessedEventArgs(value);
             base.FirePacketProcessed(args);
         }
 
@@ -250,19 +190,19 @@ namespace MGT.HRM.HRP
             if ((deviceContainerId == args.Id) && Boolean.TryParse(connectedProperty.ToString(), out isConnected) &&
                 isConnected)
             {
-                var status = await actualHRCharacteristic.WriteClientCharacteristicConfigurationDescriptorAsync(
-                    CHARACTERISTIC_NOTIFICATION_TYPE);
+                //var status = await actualHRCharacteristic.WriteClientCharacteristicConfigurationDescriptorAsync(
+                  //  CHARACTERISTIC_NOTIFICATION_TYPE);
 
-                if (status == GattCommunicationStatus.Success)
-                {
-                    logger.Debug("Stopping device connection watcher");
+               // if (status == GattCommunicationStatus.Success)
+                //{
+                  //  logger.Debug("Stopping device connection watcher");
 
                     // Once the Client Characteristic Configuration Descriptor is set, the watcher is no longer required
-                    watcher.Stop();
-                    watcher = null;
+                    //watcher.Stop();
+                    //watcher = null;
 
-                    logger.Debug("Configuration successfull");
-                }
+                    //logger.Debug("Configuration successfull");
+               // }
             }
         }
 
@@ -300,6 +240,8 @@ namespace MGT.HRM.HRP
                 timeoutTimer.Stop();
 
                 // Call Stop on All Characteristics
+                if (HeartRateCharacteristic != null)
+                    HeartRateCharacteristic.Stop();
 
                 if (watcher != null)
                 {
@@ -317,16 +259,7 @@ namespace MGT.HRM.HRP
                     service.Dispose();
                     service = null;
                 }
-
-                logger.Debug("Resetting counters");
-
-                DoReset();
             }
-        }
-
-        private void DoReset()
-        {
-            TotalPackets = 0;
         }
 
         public override void Reset()
@@ -336,21 +269,13 @@ namespace MGT.HRM.HRP
 
             Stop();
             Start();
+
+            //TODO: Reset Characteristics
         }
 
         public override void Dispose()
         {
-            if (watcher != null)
-            {
-                watcher.Stop();
-                watcher = null;
-            }
-
-            if (service != null)
-            {
-                service.Dispose();
-                service = null;
-            }
+            Stop();
         }
     }
 }

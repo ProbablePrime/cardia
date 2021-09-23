@@ -22,8 +22,9 @@ namespace MGT.Cardia
             bundle.Stopped += bundle_Stopped;
             btHrp.PacketProcessed += btHrp_OnPacketProcessed;
             btHrp.DeviceChanged += btHrp_DeviceChanged;
-            btHrp.CharacteristicIndexChanged += btHrp_CharacteristicIndexChanged;
-            btHrp.InitDelayChanged += btHrp_InitDelayChanged;
+            //TODO
+            // btHrp.CharacteristicIndexChanged += btHrp_CharacteristicIndexChanged;
+            // btHrp.InitDelayChanged += btHrp_InitDelayChanged;
 
             cbDevices.DataSource = new BindingSource(devices, null);
 
@@ -45,10 +46,10 @@ namespace MGT.Cardia
                     cbDevices.SelectedItem = devices[0];
                 }
             }
+            //TODO
+            //nudCharacteristic.Value = btHrp.CharacteristicIndex;
 
-            nudCharacteristic.Value = btHrp.CharacteristicIndex;
-
-            nudInitDelay.Value = btHrp.InitDelay;
+            //nudInitDelay.Value = btHrp.InitDelay;
         }
 
         void bundle_Started(object sender)
@@ -107,12 +108,10 @@ namespace MGT.Cardia
         {
             if (this.IsHandleCreated)
             {
-                BtHrpPacket lastPacket = (BtHrpPacket)status.HRMPacket;
-
                 this.BeginInvoke(new MethodInvoker(delegate() {
                     this.SuspendLayout();
 
-                    tbHeartRate.Text = lastPacket.HeartRate.ToString();
+                    tbHeartRate.Text = status.HRMPacket.HeartRate.ToString();
 
                     this.ResumeLayout();
                 }));
@@ -150,12 +149,14 @@ namespace MGT.Cardia
 
         private void nudCharacteristic_ValueChanged(object sender, EventArgs e)
         {
-            btHrp.CharacteristicIndex = Decimal.ToInt32(nudCharacteristic.Value);
+            //TODO
+            //btHrp.CharacteristicIndex = Decimal.ToInt32(nudCharacteristic.Value);
         }
 
         private void nudInitDelay_ValueChanged(object sender, EventArgs e)
         {
-            btHrp.InitDelay = Decimal.ToInt32(nudInitDelay.Value);
+            //TODO
+            //btHrp.InitDelay = Decimal.ToInt32(nudInitDelay.Value);
         }
 
         private void BtHrpFrm_FormClosing(object sender, FormClosingEventArgs e)

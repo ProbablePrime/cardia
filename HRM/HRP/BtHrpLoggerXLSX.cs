@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.IO;
 using OfficeOpenXml;
+using MGT.HRM.HRP.BtValues;
 
 namespace MGT.HRM.HRP
 {
@@ -72,7 +73,7 @@ namespace MGT.HRM.HRP
             Dispose();
         }
 
-        protected override void BtHrpLog(BtHrpPacket btHrpPacket)
+        protected override void BtHrpLog(HeartRateBtValue btHrpPacket)
         {
             DateTime timestamp = DateTime.Now;
 
@@ -95,7 +96,7 @@ namespace MGT.HRM.HRP
             write(btHrpPacket, timestamp);
         }
 
-        private void write(BtHrpPacket btHrpPacket, DateTime timestamp)
+        private void write(HeartRateBtValue btHrpPacket, DateTime timestamp)
         {
             excelWorksheet.Cells[row, 1].Value = timestamp;
             excelWorksheet.Cells[row, 1].Style.Numberformat.Format = dateFormat;

@@ -29,7 +29,7 @@ namespace MGT.HRM.HRP.Characteristics
             }
             protected set
             {
-                LastValue = value;
+                lastValue = value;
             }
         }
 
@@ -45,8 +45,8 @@ namespace MGT.HRM.HRP.Characteristics
 
         private void GattCharacteristicValueChangedWrapper(GattCharacteristic sender, GattValueChangedEventArgs args)
         {
-            this.GattCharacteristicValueChanged(sender, args);
             this.Packets += 1;
+            this.GattCharacteristicValueChanged(sender, args);
         }
         protected abstract void GattCharacteristicValueChanged(GattCharacteristic sender, GattValueChangedEventArgs args);
 
@@ -112,6 +112,17 @@ namespace MGT.HRM.HRP.Characteristics
                 GattCommunicationStatus status =
                     await this.GattCharacteristic.WriteClientCharacteristicConfigurationDescriptorAsync(
                     CHARACTERISTIC_NOTIFICATION_TYPE);
+
+                if (status == GattCommunicationStatus.Unreachable)
+                {
+                    // TODO
+                    ///logger.Debug("Device unreachable");
+
+                    // Register a PnpObjectWatcher to detect when a connection to the device is established,
+                    // such that the application can retry device configuration.
+                    // TODO: How do we handle whatever this is?
+                    // StartDeviceConnectionWatcher();
+                }
             }
         }
 
